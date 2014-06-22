@@ -1,6 +1,9 @@
 # encoding: utf-8
 
-require './t/vspec_helper'
+def which cmd
+  dir = ENV['PATH'].split(':').find {|p| File.executable? File.join(p, cmd)}
+  File.join(dir, cmd) unless dir.nil?
+end
 
 def notify m
   msg = "'#{m}\\n#{Time.now.to_s}'"
@@ -14,17 +17,12 @@ def notify m
   end
 end
 
-
 guard :shell do
-  watch /^(.+\.vim)$/ do |m|
-    v = Vspec.new
-    v.run "t/vspec.vim", autoloads: ['~/.vim/bundle/vim-vspec-matchers']
-    if v.success?
-      failed = v.count_failed
-      notify("#{failed} test#{failed>1 ? 's' : ''} failed") unless failed==0
-    else
-      notify "vspec occurs an error"
+  watch /^(.+\.vim)$/ do
+    result = `../themis/bin/themis test/*.vim`
+    unless $?.success?
+      notify "test for clever-f.vim fails"
     end
-    v.result
+    result
   end
 end
